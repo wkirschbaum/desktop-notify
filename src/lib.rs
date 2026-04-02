@@ -68,7 +68,8 @@ pub async fn init() -> Arc<dyn Notifier> {
 }
 
 /// Silent fallback notifier — logs at debug level, sends nothing.
-pub(crate) struct SilentNotifier;
+/// Also useful in tests.
+pub struct SilentNotifier;
 
 impl Notifier for SilentNotifier {
     fn name(&self) -> &'static str {
