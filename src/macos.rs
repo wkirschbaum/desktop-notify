@@ -131,3 +131,48 @@ pub async fn detect() -> Box<dyn Notifier> {
         Box::new(AppleScriptNotifier)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn escape_applescript_backslash() {
+        assert_eq!(escape_applescript(r"a\b"), r"a\\b");
+    }
+
+    #[test]
+    fn escape_applescript_quotes() {
+        assert_eq!(escape_applescript(r#"say "hi""#), r#"say \"hi\""#);
+    }
+
+    #[test]
+    fn escape_applescript_newlines() {
+        assert_eq!(escape_applescript("line1\nline2\rline3"), "line1 line2line3");
+    }
+
+    #[test]
+    fn escape_applescript_combined() {
+        assert_eq!(
+            escape_applescript("a\\b\n\"c\""),
+            r#"a\\b \"c\""#
+        );
+    }
+
+    #[test]
+    fn notification_sound_by_level() {
+        assert_eq!(notification_sound(NotificationLevel::Low), "Glass");
+        assert_eq!(notification_sound(NotificationLevel::Normal), "Glass");
+        assert_eq!(notification_sound(NotificationLevel::Critical), "Basso");
+    }
+
+    #[test]
+    fn terminal_notifier_name() {
+        assert_eq!(TerminalNotifier.name(), "terminal-notifier");
+    }
+
+    #[test]
+    fn applescript_notifier_name() {
+        assert_eq!(AppleScriptNotifier.name(), "osascript");
+    }
+}

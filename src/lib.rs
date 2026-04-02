@@ -83,3 +83,70 @@ impl Notifier for SilentNotifier {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_notification(level: NotificationLevel) -> Notification {
+        Notification {
+            title: "Test Title".into(),
+            body: "Test Body".into(),
+            level,
+            url: None,
+            group: "test-group".into(),
+            app_name: "test-app".into(),
+        }
+    }
+
+    #[test]
+    fn notification_level_clone_and_eq() {
+        let levels = [
+            NotificationLevel::Off,
+            NotificationLevel::Low,
+            NotificationLevel::Normal,
+            NotificationLevel::Critical,
+        ];
+        for level in &levels {
+            assert_eq!(*level, level.clone());
+        }
+        assert_ne!(NotificationLevel::Off, NotificationLevel::Low);
+        assert_ne!(NotificationLevel::Normal, NotificationLevel::Critical);
+    }
+
+    #[test]
+    fn silent_notifier_name() {
+        assert_eq!(SilentNotifier.name(), "silent");
+    }
+
+    #[tokio::test]
+    async fn silent_notifier_send_completes() {
+        let notifier = SilentNotifier;
+        for level in [
+            NotificationLevel::Off,
+            NotificationLevel::Low,
+            NotificationLevel::Normal,
+            NotificationLevel::Critical,
+        ] {
+            notifier.send(&test_notification(level)).await;
+        }
+    }
+
+    #[tokio::test]
+    async fn init_returns_a_notifier() {
+        let notifier = init().await;
+        // On any platform, init() should return a working backend
+        assert!(!notifier.name().is_empty());
+    }
+
+    #[tokio::test]
+    async fn silent_notifier_is_send_sync() {
+        fn assert_send_sync<T: Send + Sync>() {}
+        assert_send_sync::<SilentNotifier>();
+
+        // Verify the Arc<dyn Notifier> from init() is Send + Sync
+        let n = init().await;
+        assert_send_sync::<Arc<dyn Notifier>>();
+        drop(n);
+    }
+}
