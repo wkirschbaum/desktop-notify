@@ -62,6 +62,9 @@ impl Notifier for TerminalNotifier {
     }
 
     fn send(&self, n: &Notification) -> Pin<Box<dyn Future<Output = ()> + Send + '_>> {
+        if n.level == NotificationLevel::Off {
+            return Box::pin(async {});
+        }
         let sound = notification_sound(n.level);
         let mut cmd = Command::new("terminal-notifier");
         cmd.stdin(Stdio::null())
@@ -95,11 +98,14 @@ impl Notifier for AppleScriptNotifier {
     }
 
     fn send(&self, n: &Notification) -> Pin<Box<dyn Future<Output = ()> + Send + '_>> {
+        if n.level == NotificationLevel::Off {
+            return Box::pin(async {});
+        }
         let sound = notification_sound(n.level);
         let title = escape_applescript(&n.title);
         let mut body = escape_applescript(&n.body);
         if let Some(url) = &n.url {
-            body = format!("{body}\n{}", escape_applescript(url));
+            body = format!("{body} — {}", escape_applescript(url));
         }
         let script =
             format!(r#"display notification "{body}" with title "{title}" sound name "{sound}""#);
